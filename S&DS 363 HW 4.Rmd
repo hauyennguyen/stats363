@@ -1,0 +1,68 @@
+---
+title: "S&DS 363 HOMEWORK 4"
+author: "George Hua, Valerie Nguyen, Michelle Liang"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(MASS)
+#library(biotools)
+library(DiscriMiner) 
+library(klaR)
+
+crime <- read.csv("ohiocrimehm.csv", as.is=TRUE)
+View(crime)
+```
+*response variables: 1=strongly disagree, 7= strongly agree*
+*V10 (summer job provision for youths) V12 (recreation programs) V16 (treatment programs for addiction) V19 (job training and apprenticeship programs) V23 (help to troubled kids and families)*
+*independent variables V64 (continuous) V67 (continuous) V86 (continuous) V87 (continuous) V70 (categorical) V71 (categorical) V72 (categorical) V73 (categorical)*
+
+## #1
+```{r}
+#Make an object with specific variables
+ohiocrime <- crime[,c(10,12,16,23,64,67,70,71,72,73,86,87)]
+View(ohiocrime)
+#Change columns from doubles to integers
+ohiocrime <- sapply(ohiocrime, as.integer)
+ohiocrime <- as.matrix(ohiocrime)
+#Make response variable
+responsevar <- as.numeric(ohiocrime[,1])
+for (i in 2:5) {
+  responsevar <- cbind(responsevar,as.numeric(ohiocrime[,i]))
+}
+#Make labels vector
+responsevec <- c("Job provision", "Recreation program", "Treatment program", "Job training", "Help to troubled")
+
+for (i in 1:5) {
+  boxplot(ohiocrime[,i] ~ V87, data = ohiocrime, col = 'yellow', main = paste(responsevec[i], "By Income"), ylab = "")
+  #calculate means using the tapply function - could also use the by function
+  means <- tapply(ohiocrime[,i], ohiocrime[,9],mean)
+  points(means, col = "red", pch = 19, cex = 1.2)
+  text(x = c(1:4), y=means+.2, labels = round(means,2))
+}
+
+for (i in 1:5){
+  boxplot(ohiocrime[,i] ~ V72, data = ohiocrime, col = 'yellow', main = paste(responsevec[i], "By Income"), ylab = "")
+  #calculate means using the tapply function - could also use the by function
+  means <- tapply(ohiocrime[,i], ohiocrime[,8],mean)
+  points(means, col = "red", pch = 19, cex = 1.2)
+  text(x = c(1:4), y=means+.2, labels = round(means,2))
+}
+
+interaction.plot(ohiocrime[,8], ohiocrime[,9], ohiocrime[,1])
+```
+
+## #2
+
+```{r}
+#Ran Two-way MANOVA for V71 and V72
+man1 <- manova(as.matrix(ohiocrime[,c(9, 12)]) ~ ohiocrime[,"V71"] + ohiocrime[,"V72"] + ohiocrime[,"V71"]*ohiocrime[,"V72"])
+#univariate result
+summary.aov(man1)
+```
+
